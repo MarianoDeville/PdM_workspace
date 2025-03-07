@@ -32,6 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define CANT_TIEMPOS	2
 
 /* USER CODE END PD */
 
@@ -69,7 +70,8 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-  int tiempo = 500;
+  int tiempo[CANT_TIEMPOS] = {200, 500};
+  int pos = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -102,12 +104,26 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+/*
+ * # Para simplificar la modificación de los tiempos de delay uso un array de enteros
+ * cuyo tamaño está definido en CANT_TIEMPOS.
+ * # Este código no tiene filtro para falsos positivos, en un ambiente ruidoso puede generarse
+ * un falso positivo si no hay filtro pasa bajos por hardware. Mientras el programa se encuentra
+ * en el delay no se detectarán pulsaciones, solo lo hace en un tiempo muy corto a la salida del
+ * delay y la entrada del próximo.
+ * # Leo el pulsdor después de cambiar el estado del led, ya que si los tiempos son muy largos
+ * debo tener el botón presionado durante demasiado tiempo para asegurarme que sea leído.
+ * # Con tiempos muy chicos leo una pulsación como si fueran varias, mientras más chico el tiempo
+ * más pulsaciones voy a leer, con tiempos muy grandes este código es ineficiente, ya que debo
+ * tener pulsado el botón por mucho tiempo para que pueda ser detectado.
+ */
+
+	  Parpadeo(tiempo[pos]);
 
 	  if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)){
 
-		  tiempo = 1000;
+		  pos = pos < CANT_TIEMPOS? pos+1: 0;
 	  }
-	  Parpadeo(tiempo);
   }
   /* USER CODE END 3 */
 }
