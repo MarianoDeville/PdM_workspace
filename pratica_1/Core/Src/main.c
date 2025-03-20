@@ -68,6 +68,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
 	tick_t tiempo[CANT_TIEMPOS] = {1000, 200, 100};
 	uint8_t arraypos = 0;
 	uint8_t cantidad_ciclos = 2;
@@ -127,14 +128,21 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
-
+/**
+ * Función: inicializa el delay no bloqueante.
+ * Argumento: puntero a la estructura con las variables, duración del delay.
+ */
 void delayInit(delay_t * delay, tick_t duration){
 
 	delay->duration = duration;
 	delay->running = false;
 	return;
 }
-
+/**
+ * Función: obtengo el estado del delay
+ * Argumento: puntero a la estructura con las variables del delay.
+ * Devuelve: estado del delay (contando / tiempo cumplido).
+ */
 bool_t delayRead(delay_t * delay){
 
 	if(!delay->running){
@@ -151,7 +159,10 @@ bool_t delayRead(delay_t * delay){
 	}
 	return false;
 }
-
+/**
+ * Función: defino un nuevo tiempo de delay.
+ * Argumento: puntero a la estructura con las variables del delay, duración del delay.
+ */
 void delayWrite( delay_t * delay, tick_t duration ){
 
 	delay->duration = duration;

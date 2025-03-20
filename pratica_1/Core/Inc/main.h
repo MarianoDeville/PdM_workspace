@@ -40,6 +40,9 @@ extern "C" {
 /* USER CODE BEGIN ET */
 typedef uint32_t tick_t;
 typedef bool bool_t;
+/**
+ * Estructura defina para el manejo del delay no bloqueante.
+ */
 typedef struct{
 
 	tick_t startTime;
