@@ -26,19 +26,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum {
-
-	BUTTON_UP,
-	BUTTON_FALLING,
-	BUTTON_DOWN,
-	BUTTON_RAISING,
-} debounceState_t;
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TIEMPO_ANTI_REBOTE	40
 
 /* USER CODE END PD */
 
@@ -52,8 +44,6 @@ typedef enum {
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-debounceState_t estadoActual;
-delay_t delay_anti_rebote;
 
 /* USER CODE END PV */
 
@@ -63,10 +53,6 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
-void debounceFSM_init(void);
-void debounceFSM_update();
-void buttonPressed(void);
-void buttonReleased(void);
 
 /* USER CODE END PFP */
 
@@ -84,9 +70,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-	const tick_t tiempo[] = {50, 300, 700, 1300};
+	const tick_t tiempo[] = {100, 500};	// Aqui defino los tiempos de parpadeo entre los que se alterna.
 	uint8_t array_posicion = 0;
-	delay_t delay_no_bloqueante;
+	delay_t delay_parpadeo;
 
   /* USER CODE END 1 */
 
@@ -96,7 +82,7 @@ int main(void)
 	HAL_Init();
 
   /* USER CODE BEGIN Init */
-  	DelayInit(&delay_no_bloqueante, tiempo[array_posicion]);
+  	DelayInit(&delay_parpadeo, tiempo[array_posicion]);
   	debounceFSM_init();
 
   /* USER CODE END Init */
@@ -123,101 +109,22 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  debounceFSM_update();
+	  debounceFSM_update(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin));
+
+	  if(readKey()) {
+
+		  array_posicion++;
+
+		  if(array_posicion >= (sizeof(tiempo)/sizeof(tiempo[0])))
+			  array_posicion = 0;
+		  DelayWrite(&delay_parpadeo, tiempo[array_posicion]);
+	  }
+
+	  if(DelayRead(&delay_parpadeo))
+		  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
   }
   /* USER CODE END 3 */
 }
-
-/**
-  * @brief  Inicializa las variables de la máuina de estado para la función anti rebote.
-  * @param  None.
-  * @retval None
-  */
-void debounceFSM_init(void) {
-
-	estadoActual = BUTTON_UP;
-	DelayInit(&delay_anti_rebote, TIEMPO_ANTI_REBOTE);
-}
-
-/**
-  * @brief  Utilizando una máquina de estados compruebo si hubo un cambio con el estado anterior.
-  * @param  Estado actual - booleano.
-  * @retval None
-  */
-void debounceFSM_update() {
-
-	switch(estadoActual) {
-
-		case BUTTON_UP:
-
-			if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) {
-
-				DelayRead(&delay_anti_rebote);
-				estadoActual = BUTTON_FALLING;
-			}
-			break;
-
-		case BUTTON_FALLING:
-
-			if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) && DelayRead(&delay_anti_rebote)) {
-
-				estadoActual = BUTTON_DOWN;
-				buttonPressed();
-			}
-			break;
-
-		case BUTTON_RAISING:
-
-			if(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) && DelayRead(&delay_anti_rebote)) {
-
-				estadoActual = BUTTON_UP;
-				buttonReleased();
-			}
-			break;
-
-		case BUTTON_DOWN:
-
-			if(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) {
-
-				DelayRead(&delay_anti_rebote);
-				estadoActual = BUTTON_RAISING;
-			}
-			break;
-
-		default:
-
-			debounceFSM_init();
-			return;
-	}
-}
-
-/**
-  * @brief  Prendo un led cuando el pulsador es presionado y he confirmado que no es un ruido eléctrico.
-  * @param  None.
-  * @retval None
-  */
-void buttonPressed(void) {
-
-	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-	return;
-}
-
-/**
-  * @brief  Apago un led cuando el pulsador es presionado y he confirmado que no es un ruido eléctrico.
-  * @param  None.
-  * @retval None
-  */
-void buttonReleased(void) {
-
-	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-	return;
-}
-
-
-
-
-
-
 
 /**
   * @brief System Clock Configuration
