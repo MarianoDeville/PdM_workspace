@@ -5,6 +5,9 @@ Autor: Mariano Ariel Deville
 Objetivo:
 Implementar un MEF para trabajar con anti-rebotes por software.
 
+Nota:
+Implementación alternativa que no sigue los parámetros de funciones propuestas en el enunciado.
+
 Punto 1
 
 Crear un nuevo proyecto como copia del proyecto realizado para la práctica 3.

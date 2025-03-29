@@ -31,12 +31,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define POSICION_INICAL	0
 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define TAMANO_CADENA	(sizeof(tiempo)/sizeof(tiempo[POSICION_INICAL])
 
 /* USER CODE END PM */
 
@@ -71,7 +72,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
 	const tick_t tiempo[] = {100, 500};	// Aqui defino los tiempos de parpadeo entre los que se alterna.
-	uint8_t array_posicion = 0;
+	uint8_t array_posicion = POSICION_INICAL;
 	delay_t delay_parpadeo;
 
   /* USER CODE END 1 */
@@ -105,18 +106,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+	/* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	/* USER CODE BEGIN 3 */
 
-	  debounceFSM_update(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin));
+	/*
+	* La mejora que propongo es que la función debounceFSM_update() devuelva un valor indicando si el botón fue
+	* presionado, soltado, sigue en el mismo estado o si hubo un error, de esta forma cambiando PRESIONO_BOTON
+	* por BOTON_NO_PRESIONADO cambio si la acción la realizo en el flanco ascendente o descendente o utilizando
+	* un switch() puedo realizar actividades distintas según detecto un flanco ascendente o descendente.
+	* Además de reducirse el código se mantiene simple y fácil de leer.
+	*/
+	  if(debounceFSM_update(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) == PRESIONO_BOTON) {
 
-	  if(readKey()) {
-
-		  array_posicion++;
-
-		  if(array_posicion >= (sizeof(tiempo)/sizeof(tiempo[0])))
-			  array_posicion = 0;
+		  if(++array_posicion >= TAMANO_CADENA))
+			  array_posicion = POSICION_INICAL;
 		  DelayWrite(&delay_parpadeo, tiempo[array_posicion]);
 	  }
 

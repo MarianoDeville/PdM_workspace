@@ -10,11 +10,19 @@
 
 #include "API_delay.h"
 
+
+typedef enum {
+
+	ERROR_ANTI_REBOTE,
+	PRESIONO_BOTON,
+	SUELTO_BOTON,
+	BOTON_SIN_CAMBIOS,
+} estadoPulsador_t;
+
 /**
  * Prototipo de funciones públicas.
  */
 void debounceFSM_init(void);
-void debounceFSM_update(bool_t estado_pin);
-bool_t readKey(void);
+estadoPulsador_t debounceFSM_update(bool_t estado_pin);
 
 #endif /* API_INC_API_DEBOUNCE_H_ */
