@@ -17,6 +17,7 @@ typedef enum {
 	PRESIONO_BOTON,
 	SUELTO_BOTON,
 	BOTON_SIN_CAMBIOS,
+	RUIDO,
 } estadoPulsador_t;
 
 /**

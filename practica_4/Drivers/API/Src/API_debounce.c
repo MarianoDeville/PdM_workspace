@@ -63,19 +63,33 @@ estadoPulsador_t debounceFSM_update(bool_t estado_pin) {
 
 		case BUTTON_FALLING:
 
-			if(!estado_pin && DelayRead(&delay_anti_rebote)) {
+			if(DelayRead(&delay_anti_rebote)) {
 
-				estadoActual = BUTTON_DOWN;
-				return PRESIONO_BOTON;
+				if(!estado_pin) {
+
+					estadoActual = BUTTON_DOWN;
+					return PRESIONO_BOTON;
+				} else {
+
+					estadoActual = BUTTON_UP;
+					return RUIDO;
+				}
 			}
 			break;
 
 		case BUTTON_RAISING:
 
-			if(estado_pin && DelayRead(&delay_anti_rebote)) {
+			if(DelayRead(&delay_anti_rebote)) {
 
-				estadoActual = BUTTON_UP;
-				return SUELTO_BOTON;
+				if(estado_pin) {
+
+					estadoActual = BUTTON_UP;
+					return SUELTO_BOTON;
+				} else {
+
+					estadoActual = BUTTON_DOWN;
+					return RUIDO;
+				}
 			}
 			break;
 
