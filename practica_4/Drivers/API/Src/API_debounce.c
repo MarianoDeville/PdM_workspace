@@ -60,38 +60,44 @@ void debounceFSM_update(bool_t estado_pin) {
 
 		case BUTTON_UP:
 
-			if(!estado_pin) {
-
-				DelayRead(&delay_anti_rebote);
+			if(!estado_pin)
 				estadoActual = BUTTON_FALLING;
-			}
 			break;
 
 		case BUTTON_FALLING:
 
-			if(!estado_pin && DelayRead(&delay_anti_rebote)) {
+			if(!estado_pin) {
 
-				estadoActual = BUTTON_DOWN;
-				buttonPressed();
+				if(DelayRead(&delay_anti_rebote)) {
+
+					estadoActual = BUTTON_DOWN;
+					buttonPressed();
+				} else {
+
+					estadoActual = BUTTON_UP;
+				}
 			}
 			break;
 
 		case BUTTON_RAISING:
 
-			if(estado_pin && DelayRead(&delay_anti_rebote)) {
+			if(estado_pin) {
 
-				estadoActual = BUTTON_UP;
-				buttonReleased();
+				if(DelayRead(&delay_anti_rebote)) {
+
+					estadoActual = BUTTON_UP;
+					buttonReleased();
+				} else {
+
+					estadoActual = BUTTON_DOWN;
+				}
 			}
 			break;
 
 		case BUTTON_DOWN:
 
-			if(estado_pin) {
-
-				DelayRead(&delay_anti_rebote);
+			if(estado_pin)
 				estadoActual = BUTTON_RAISING;
-			}
 			break;
 
 		default:
