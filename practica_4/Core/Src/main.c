@@ -159,19 +159,31 @@ void debounceFSM_update() {
 
 		case BUTTON_FALLING:
 
-			if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) && DelayRead(&delay_anti_rebote)) {
+			if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) {
 
-				estadoActual = BUTTON_DOWN;
-				buttonPressed();
+				if(DelayRead(&delay_anti_rebote)) {
+
+					estadoActual = BUTTON_DOWN;
+					buttonPressed();
+				} else {
+
+					estadoActual = BUTTON_UP;
+				}
 			}
 			break;
 
 		case BUTTON_RAISING:
 
-			if(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) && DelayRead(&delay_anti_rebote)) {
+			if(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) {
 
-				estadoActual = BUTTON_UP;
-				buttonReleased();
+				if(DelayRead(&delay_anti_rebote)) {
+
+					estadoActual = BUTTON_UP;
+					buttonReleased();
+				} else {
+
+					estadoActual = BUTTON_DOWN;
+				}
 			}
 			break;
 
