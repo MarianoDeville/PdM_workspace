@@ -84,7 +84,8 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   	DelayInit(&delay_parpadeo, tiempo[array_posicion]);
-  	debounceFSM_init();
+  	debounceData_t boton1;
+  	debounceFSM_init(&boton1);
 
   /* USER CODE END Init */
 
@@ -117,7 +118,7 @@ int main(void)
 	* un switch() puedo realizar actividades distintas según detecto un flanco ascendente o descendente.
 	* Además de reducirse el código se mantiene simple y fácil de leer.
 	*/
-	  if(debounceFSM_update(HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) == PRESIONO_BOTON) {
+	  if(debounceFSM_update(&boton1, HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) == PRESIONO_BOTON) {
 
 		  if(++array_posicion >= TAMANO_CADENA))
 			  array_posicion = POSICION_INICAL;
