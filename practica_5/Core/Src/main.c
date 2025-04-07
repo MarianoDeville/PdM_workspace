@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "API_uart.h"
+#include "string.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -44,6 +44,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -54,13 +55,14 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-
+static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t rx_buff[15];
 
 /* USER CODE END 0 */
 
@@ -72,7 +74,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	const tick_t tiempo[] = {100, 500};	// Aqui defino los tiempos de parpadeo entre los que se alterna.
+	const tick_t tiempo[] = {1000, 500};	// Aqui defino los tiempos de parpadeo entre los que se alterna.
 	uint8_t array_posicion = POSICION_INICAL;
 	delay_t delay_parpadeo;
 
@@ -99,30 +101,38 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-  uartInit();
+  HAL_UART_Receive_IT(&huart5, rx_buff, 15);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t tx_buff[] = "Botón presionado\n\r";
+
+
   while (1)
   {
     /* USER CODE END WHILE */
 
+    /* USER CODE BEGIN 3 */
 	if(debounceFSM_update(&boton1, HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) == PRESIONO_BOTON) {
 
 		if(++array_posicion >= TAMANO_CADENA))
 			array_posicion = POSICION_INICAL;
 		DelayWrite(&delay_parpadeo, tiempo[array_posicion]);
-		uartSendString("Presioné el botón \n\r");
+
+		HAL_UART_Transmit(&huart5, rx_buff, sizeof(rx_buff), HAL_MAX_DELAY);
+		while(huart5.gState == HAL_UART_STATE_BUSY_TX);
+		memset(rx_buff, 0, 15);
+		HAL_UART_Transmit_IT(&huart5, tx_buff, sizeof(tx_buff));
+
 	}
 
 	if(DelayRead(&delay_parpadeo))
 		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-
-
-
-    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -175,6 +185,39 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief UART5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART5_Init(void)
+{
+
+  /* USER CODE BEGIN UART5_Init 0 */
+
+  /* USER CODE END UART5_Init 0 */
+
+  /* USER CODE BEGIN UART5_Init 1 */
+
+  /* USER CODE END UART5_Init 1 */
+  huart5.Instance = UART5;
+  huart5.Init.BaudRate = 115200;
+  huart5.Init.WordLength = UART_WORDLENGTH_8B;
+  huart5.Init.StopBits = UART_STOPBITS_1;
+  huart5.Init.Parity = UART_PARITY_NONE;
+  huart5.Init.Mode = UART_MODE_TX_RX;
+  huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART5_Init 2 */
+
+  /* USER CODE END UART5_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -190,7 +233,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -222,6 +265,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
