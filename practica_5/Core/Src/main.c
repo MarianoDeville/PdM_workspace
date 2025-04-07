@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "API_delay.h"
 #include "API_debounce.h"
+#include "API_uart.h"
 
 /* USER CODE END Includes */
 
@@ -35,7 +36,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define POSICION_INICAL	0
-
+#define	RX_MSG_SIZE		1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -62,7 +63,7 @@ static void MX_UART5_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t rx_buff[15];
+uint8_t rx_buff[20];
 
 /* USER CODE END 0 */
 
@@ -89,6 +90,7 @@ int main(void)
 	DelayInit(&delay_parpadeo, tiempo[array_posicion]);
 	debounceData_t boton1;
 	debounceFSM_init(&boton1);
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -102,15 +104,16 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_UART5_Init();
-  /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart5, rx_buff, 15);
 
+  /* USER CODE BEGIN 2 */
+	if(!uartInit())
+		Error_Handler();
+	uartReceiveStringSize(rx_buff, 1);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t tx_buff[] = "Botón presionado\n\r";
 
 
   while (1)
@@ -118,21 +121,32 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	if(debounceFSM_update(&boton1, HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin)) == PRESIONO_BOTON) {
 
-		if(++array_posicion >= TAMANO_CADENA))
-			array_posicion = POSICION_INICAL;
-		DelayWrite(&delay_parpadeo, tiempo[array_posicion]);
+		switch(debounceFSM_update(&boton1, HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin))) {
 
-		HAL_UART_Transmit(&huart5, rx_buff, sizeof(rx_buff), HAL_MAX_DELAY);
-		while(huart5.gState == HAL_UART_STATE_BUSY_TX);
-		memset(rx_buff, 0, 15);
-		HAL_UART_Transmit_IT(&huart5, tx_buff, sizeof(tx_buff));
+			case PRESIONO_BOTON:
 
-	}
+				if(++array_posicion >= TAMANO_CADENA))
+				array_posicion = POSICION_INICAL;
+				DelayWrite(&delay_parpadeo, tiempo[array_posicion]);
+				uartSendString("Flanco descendente detectado" CRLF);
+				break;
 
-	if(DelayRead(&delay_parpadeo))
-		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+			case SUELTO_BOTON:
+
+				uartSendString("Flanco ascendente detectado" CRLF);
+				break;
+		}
+
+		if(isNewMessage()) {
+
+			if(rx_buff[0] == 'c')
+				muestroConfiguracion();
+			memset(rx_buff, 0, sizeof(rx_buff));
+		}
+
+		if(DelayRead(&delay_parpadeo))
+			HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
   }
   /* USER CODE END 3 */
 }
@@ -289,6 +303,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+
+	uartReceiveStringSize(rx_buff, RX_MSG_SIZE);
+}
 
 /* USER CODE END 4 */
 
