@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "string.h"
+#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -37,6 +38,7 @@
 /* USER CODE BEGIN PD */
 #define POSICION_INICAL	0
 #define	RX_MSG_SIZE		1
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +51,7 @@ UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+puerto_UART puerto_UART1;
 
 /* USER CODE END PV */
 
@@ -56,14 +59,13 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_UART5_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t rx_buff[20];
 
 /* USER CODE END 0 */
 
@@ -103,46 +105,67 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  MX_UART5_Init();
 
   /* USER CODE BEGIN 2 */
-	if(!uartInit())
+	if(!uartInit(&puerto_UART1, &huart5))
 		Error_Handler();
-	uartReceiveStringSize(rx_buff, 1);
+	uartReceiveStringSize(&puerto_UART1, RX_MSG_SIZE);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-
-  while (1)
+  while(1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
+	  /* Muestro lo sucesos ocurridos en la máquina de estado y reacciono a ellos. */
 		switch(debounceFSM_update(&boton1, HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin))) {
 
 			case PRESIONO_BOTON:
 
 				if(++array_posicion >= TAMANO_CADENA))
-				array_posicion = POSICION_INICAL;
+					array_posicion = POSICION_INICAL;
 				DelayWrite(&delay_parpadeo, tiempo[array_posicion]);
-				uartSendString("Flanco descendente detectado" CRLF);
+				uartSendString(&puerto_UART1, "Flanco descendente detectado." CRLF);
+				char msg_salida[MAX_TX_BUFFER];
+				sprintf(msg_salida, "Periodo de parpadeo: %lu" CRLF, 2 * tiempo[array_posicion]);
+				uartSendString(&puerto_UART1, msg_salida);
 				break;
 
 			case SUELTO_BOTON:
 
-				uartSendString("Flanco ascendente detectado" CRLF);
+				uartSendString(&puerto_UART1, "Flanco ascendente detectado." CRLF);
 				break;
+
+			case RUIDO:
+
+				uartSendString(&puerto_UART1, "Ruido detectado en el pulsador." CRLF);
+				break;
+
+			case ERROR_ANTI_REBOTE:
+
+				uartSendString(&puerto_UART1, "Error al procesar el antirrebote." CRLF);
+				break;
+
+			case BOTON_SIN_CAMBIOS:
+
+				break;
+
+			default:
+
+				uartSendString(&puerto_UART1, "Error inesperado." CRLF);
 		}
 
-		if(isNewMessage()) {
+		/* Ha llegado un nuevo mensaje por el puerto serie? */
+		if(isNewMessage(&puerto_UART1)) {
 
-			if(rx_buff[0] == 'c')
-				muestroConfiguracion();
-			memset(rx_buff, 0, sizeof(rx_buff));
+			if(puerto_UART1.rx_buff[0] == 'c')
+				muestroConfiguracion(&puerto_UART1);
+			memset(puerto_UART1.rx_buff, 0, sizeof(puerto_UART1.rx_buff));
 		}
 
 		if(DelayRead(&delay_parpadeo))
@@ -196,39 +219,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief UART5 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_UART5_Init(void)
-{
-
-  /* USER CODE BEGIN UART5_Init 0 */
-
-  /* USER CODE END UART5_Init 0 */
-
-  /* USER CODE BEGIN UART5_Init 1 */
-
-  /* USER CODE END UART5_Init 1 */
-  huart5.Instance = UART5;
-  huart5.Init.BaudRate = 115200;
-  huart5.Init.WordLength = UART_WORDLENGTH_8B;
-  huart5.Init.StopBits = UART_STOPBITS_1;
-  huart5.Init.Parity = UART_PARITY_NONE;
-  huart5.Init.Mode = UART_MODE_TX_RX;
-  huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart5) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART5_Init 2 */
-
-  /* USER CODE END UART5_Init 2 */
-
 }
 
 /**
@@ -306,7 +296,7 @@ static void MX_GPIO_Init(void)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
-	uartReceiveStringSize(rx_buff, RX_MSG_SIZE);
+	uartReceiveStringSize(&puerto_UART1, RX_MSG_SIZE);
 }
 
 /* USER CODE END 4 */

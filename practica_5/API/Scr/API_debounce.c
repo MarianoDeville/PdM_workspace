@@ -2,7 +2,7 @@
  * API_debounce.c
  *
  *  Created on: Mar 28, 2025
- *      Author: mariano
+ *      Author: Mariano Deville
  */
 #include "API_debounce.h"
 

@@ -2,7 +2,7 @@
  * API_debounce.h
  *
  *  Created on: Mar 28, 2025
- *      Author: mariano
+ *      Author: Mariano Deville
  */
 
 #ifndef API_INC_API_DEBOUNCE_H_
@@ -22,7 +22,7 @@ typedef enum {
 } debounceState_t;
 
 /**
- * Respuestas de la máuina de estados.
+ * Respuestas de la máquina de estados.
  */
 typedef enum {
 
